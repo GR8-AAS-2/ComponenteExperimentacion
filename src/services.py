@@ -18,6 +18,61 @@ import random
 
 fake = Faker('es_CO')
 
+class RespuestaIncidentesService:
+    
+    def __init__(self):
+        self.timeout = 30  # segundos
+        self.url_respuestaincidentes = os.environ.get(
+            "RESPUESTAINCIDENTES_URL"
+        )
+
+    async def get_elevacion_privilegios(
+            self, 
+            usuario_id: str,
+        ) -> Dict[str, Any]:
+            
+            headers = {
+                "X-API-Key": os.environ.get("RESPUESTAINCIDENTES_API_KEY"),
+                "Content-Type": "application/json"
+            }
+
+            payload = {
+                "usuario_id": usuario_id,
+                }
+
+            endpoint = f"{self.url_respuestaincidentes}/api/incidentes/elevacion-privilegios"
+    
+            inicio = time.perf_counter()
+            
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    response = await client.post(
+                        endpoint,
+                        json=payload,
+                        headers=headers
+                    )
+    
+                    fin = time.perf_counter()
+                    tiempo_tardado_ms = round((fin - inicio) * 1000, 2)
+                    response.raise_for_status()
+                    data = response.json()
+                    data["tiempo_tardado"] = tiempo_tardado_ms
+    
+                    return data
+            except httpx.RequestError as e:
+                print(f"Error al comunicarse con el motor de respuesta a incidentes: {e}")
+                raise
+            except httpx.HTTPStatusError as e:
+                fin = time.perf_counter()
+                tiempo_tardado_ms = round((fin - inicio) * 1000, 2)
+                print(f"Error HTTP del motor respuesta a incidentes: {e.response.status_code} - {e.response.text}")
+                try:
+                    data = e.response.json()
+                    data["tiempo_tardado"] = tiempo_tardado_ms
+                    return data
+                except Exception:
+                    raise
+
 
 class MotorPolizasService:
     

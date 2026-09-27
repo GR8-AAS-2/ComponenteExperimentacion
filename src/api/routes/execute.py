@@ -7,7 +7,7 @@ import random
 
 from src.models import SolicitudPoliza
 
-from src.services import generar_token_motorpolizas, generar_solicitudes_polizas, MotorPolizasService
+from src.services import generar_token_motorpolizas, generar_solicitudes_polizas, MotorPolizasService, RespuestaIncidentesService
 from src.db import db
 
 template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../templates'))
@@ -27,10 +27,14 @@ def execute_consenso():
 
         cantidad_polizas = datos.get("cantidad_polizas", 10)
         cantidad_modificar = datos.get("cantidad_modificar", 5)
+        ip_habitual = datos.get("ip_habitual", "192.0.2.10")
+        ip_nueva = datos.get("ip_nueva", "198.51.100.45")
+        usuario_id = datos.get("usuario_id", "USR_DEV_01")
         
         solicitudes = generar_solicitudes_polizas(cantidad_polizas)
 
         servicioMotorPolizas = MotorPolizasService()
+        #servicioRespuestaIncidentes = RespuestaIncidentesService()
 
         respuestasPolizas = asyncio.run(
             servicioMotorPolizas.process_solicitudesPolizas(solicitudes)
@@ -57,20 +61,48 @@ def execute_consenso():
             servicioMotorPolizas.process_get_polizas_by_ids(ids_polizas)
         )
 
+        rol_anterior = "ADMIN"
+        rol_nuevo = "SUPERADMIN"
+        elevacion_privilegios = asyncio.run(
+                    servicioMotorPolizas.send_post_elevacion_privilegios(
+                        usuario_id=usuario_id,
+                        rol_anterior=rol_anterior,
+                        rol_nuevo=rol_nuevo,
+                        ip_origen=ip_habitual
+                    )
+                )
+        elevacion_privilegios = asyncio.run(
+                    servicioMotorPolizas.send_post_elevacion_privilegios(
+                        usuario_id=usuario_id,
+                        rol_anterior=rol_anterior,
+                        rol_nuevo=rol_nuevo,
+                        ip_origen=ip_habitual
+                    )
+                )
+
         #192.0.2.10
         #198.51.100.45
-        print("Se intentará realizar elevación de privilegios para el usuario 'USR_DEV_01' con rol 'ADMIN' a rol 'SUPERADMIN', desde IP 198.51.100.45")
+        print("Se intentará realizar elevación de privilegios para el usuario " + usuario_id + " con rol " + rol_anterior + " a rol " + rol_nuevo + ", desde IP " + ip_nueva)
         elevacion_privilegios = asyncio.run(
             servicioMotorPolizas.send_post_elevacion_privilegios(
-                usuario_id="USR_DEV_01",
-                rol_anterior="ADMIN",
-               rol_nuevo="SUPERADMIN",
-                ip_origen="198.51.100.45"
+                usuario_id=usuario_id,
+                rol_anterior=rol_anterior,
+                rol_nuevo=rol_nuevo,
+                ip_origen=ip_nueva
             )
         )
 
         print("Resultado de la elevación de privilegios:", elevacion_privilegios)
 
+        #print("Se consultará el estado de la elevación de privilegios para el usuario 'USR_DEV_01'")
+        #estado_elevacion = asyncio.run(
+        #    servicioRespuestaIncidentes.get_elevacion_privilegios(
+        #        usuario_id=usuario_id
+        #    )
+        #)
+
+        #print(estado_elevacion)
+        
         return consultas_get, 200, {'Content-Type': 'application/json'}
         
     except ValueError as e:
