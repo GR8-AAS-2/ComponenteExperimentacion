@@ -57,6 +57,20 @@ def execute_consenso():
             servicioMotorPolizas.process_get_polizas_by_ids(ids_polizas)
         )
 
+        #192.0.2.10
+        #198.51.100.45
+        print("Se intentará realizar elevación de privilegios para el usuario 'USR_DEV_01' con rol 'ADMIN' a rol 'SUPERADMIN', desde IP 198.51.100.45")
+        elevacion_privilegios = asyncio.run(
+            servicioMotorPolizas.send_post_elevacion_privilegios(
+                usuario_id="USR_DEV_01",
+                rol_anterior="ADMIN",
+               rol_nuevo="SUPERADMIN",
+                ip_origen="198.51.100.45"
+            )
+        )
+
+        print("Resultado de la elevación de privilegios:", elevacion_privilegios)
+
         return consultas_get, 200, {'Content-Type': 'application/json'}
         
     except ValueError as e:

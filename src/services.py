@@ -24,8 +24,7 @@ class MotorPolizasService:
     def __init__(self):
         self.timeout = 30  # segundos
         self.url_motorpolizas = os.environ.get(
-            "MOTORPOLIZAS_URL", 
-            "https://componente-motor-polizas.vercel.app"
+            "MOTORPOLIZAS_URL"
         )
 
     async def send_post_to_motorpolizas(
@@ -35,7 +34,6 @@ class MotorPolizasService:
         ruta: str
     ) -> Dict[str, Any]:
         
-        # Corregido: desempaquetar la tupla (token, payload)
         token, _ = generar_token_motorpolizas()
         
         headers = {
@@ -121,7 +119,6 @@ class MotorPolizasService:
                 fin = time.perf_counter()
                 tiempo_ms = round((fin - inicio) * 1000, 2)
 
-                print(response)
                 response.raise_for_status()
                 data = response.json()
                 if isinstance(data, dict):
@@ -162,9 +159,63 @@ class MotorPolizasService:
 
         return resultados
 
+    async def send_post_elevacion_privilegios(
+            self, 
+            usuario_id: str,
+            rol_anterior: str,
+            rol_nuevo: str,
+            ip_origen: str,
+        ) -> Dict[str, Any]:
+            
+            token, _ = generar_token_motorpolizas()
+
+            payload = {
+                "usuario_id": usuario_id,
+                "rol_anterior": rol_anterior,
+                "rol_nuevo": rol_nuevo,
+                "ip_origen": ip_origen
+            }
+            
+            headers = {
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json"
+            }
+            endpoint = f"{self.url_motorpolizas}/api/incidentes/elevacion-privilegios"
+    
+            inicio = time.perf_counter()
+            
+            try:
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    response = await client.post(
+                        endpoint,
+                        json=payload,
+                        headers=headers
+                    )
+    
+                    fin = time.perf_counter()
+                    tiempo_tardado_ms = round((fin - inicio) * 1000, 2)
+                    response.raise_for_status()
+                    data = response.json()
+                    data["tiempo_tardado"] = tiempo_tardado_ms
+    
+                    return data
+            except httpx.RequestError as e:
+                print(f"Error al comunicarse con el motor pólizas: {e}")
+                raise
+            except httpx.HTTPStatusError as e:
+                fin = time.perf_counter()
+                tiempo_tardado_ms = round((fin - inicio) * 1000, 2)
+                print(f"Error HTTP del motor pólizas: {e.response.status_code} - {e.response.text}")
+                try:
+                    data = e.response.json()
+                    data["tiempo_tardado"] = tiempo_tardado_ms
+                    return data
+                except Exception:
+                    raise
+    
 
 def generar_token_motorpolizas(codigo_usuario="USR_DEV_01", rol="ADMIN", horas_exp=24):
-    secret_key = os.environ.get("JWT_SECRET_KEY")
+    secret_key = os.environ.get("JWT_SECRET_KEY_MOTORPOLIZAS")
     algorithm = os.environ.get("JWT_ALGORITHM", "HS256")
 
     payload = {
