@@ -2,77 +2,255 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Reporte de Experimento</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Integridad de Pólizas</title>
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; margin: 30px; background-color: #f8fafc; color: #1e293b; }
-        .card { background: white; padding: 24px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        h1, h2 { color: #0f172a; margin-top: 0; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #cbd5e1; padding: 10px; text-align: left; }
-        th { background-color: #f1f5f9; font-weight: 600; }
-        .badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; }
-        .success { background-color: #dcfce7; color: #166534; }
-        .warning { background-color: #fef3c7; color: #92400e; }
-        .danger { background-color: #fee2e2; color: #991b1b; }
-        img { max-width: 100%; height: auto; }
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        body { 
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            margin: 0; 
+            padding: 30px; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+        }
+
+        .header {
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0 0 6px 0;
+        }
+
+        .header p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background: var(--card-bg);
+            padding: 16px 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .kpi-card .label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .kpi-card .value {
+            font-size: 28px;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        .kpi-card.success .value { color: var(--success); }
+        .kpi-card.danger .value { color: var(--danger); }
+
+        .card { 
+            background: var(--card-bg); 
+            padding: 24px; 
+            border-radius: 8px; 
+            margin-bottom: 24px; 
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+        }
+
+        h2 { 
+            font-size: 18px; 
+            margin-top: 0; 
+            margin-bottom: 16px; 
+            color: var(--text-main);
+        }
+
+        .chart-img { 
+            width: 100%; 
+            height: auto; 
+            display: block; 
+            border-radius: 4px; 
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            font-size: 14px;
+        }
+
+        th, td { 
+            border-bottom: 1px solid var(--border-color); 
+            padding: 12px 10px; 
+            text-align: left; 
+        }
+
+        th { 
+            background-color: #f1f5f9; 
+            font-weight: 600; 
+            color: var(--text-muted);
+        }
+
+        .badge { 
+            padding: 4px 10px; 
+            border-radius: 12px; 
+            font-size: 12px; 
+            font-weight: 600; 
+            display: inline-block;
+        }
+
+        .badge.success { background-color: #d1fae5; color: #065f46; }
+        .badge.danger { background-color: #fee2e2; color: #991b1b; }
     </style>
 </head>
 <body>
-    <h1>Reporte de Experimento</h1>
 
-    <!-- Tabla resultados -->
-    <div class="card">
-        <h2>Resumen de Latencia y Estado (Código 200)</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Métrica / Criterio</th>
-                    <th>Cantidad</th>
-                </tr>
-            </thead>
-            <tbody>
-            <tr>
-                <td>Código 200 con Latencia <strong>&lt; 300 ms</strong> y <strong>2 votos</strong></td>
-                <td><span class="badge success">{{ metricas.cod_200_menos_300ms_2votos }}</span></td>
-            </tr>
-            <tr>
-                <td>Código 200 con Latencia <strong>&lt; 300 ms</strong> y <strong>3 votos</strong></td>
-                <td><span class="badge success">{{ metricas.cod_200_menos_300ms_3votos }}</span></td>
-            </tr>
-            <tr>
-                <td>Código 200 con Latencia <strong>&gt;= 300 ms</strong> y <strong>2 votos</strong></td>
-                <td><span class="badge warning">{{ metricas.cod_200_mas_300ms_2votos }}</span></td>
-            </tr>
-            <tr>
-                <td>Código 200 con Latencia <strong>&gt;= 300 ms</strong> y <strong>3 votos</strong></td>
-                <td><span class="badge warning">{{ metricas.cod_200_mas_300ms_3votos }}</span></td>
-            </tr>
-            <tr>
-                <td>Código <strong>distinto a 200</strong> (None, 409, 500, etc.)</td>
-                <td><span class="badge danger">{{ metricas.cod_diferente_200 }}</span></td>
-            </tr>
-        </tbody>
-        </table>
+    <div class="header">
+        <h1>Reporte de Auditoría e Integridad de Pólizas</h1>
+        <p>Análisis de verificación de Hash y tiempos de respuesta de consulta</p>
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div class="label">Total Pólizas</div>
+            <div class="value">{{ metricas.total_polizas }}</div>
+        </div>
+        <div class="kpi-card success">
+            <div class="label">Hash Válidos</div>
+            <div class="value">{{ metricas.coinciden_hash }}</div>
+        </div>
+        <div class="kpi-card danger">
+            <div class="label">Hash Alterados</div>
+            <div class="value">{{ metricas.no_coinciden_hash }}</div>
+        </div>
+        <div class="kpi-card">
+            <div class="label">% Integridad</div>
+            <div class="value">{{ metricas.porcentaje_integros }}%</div>
+        </div>
     </div>
 
     <div class="card">
-        <h2>Métricas de Consenso y Estado</h2>
-        <img src="{{ grafico_base64_1 }}" alt="Gráficas de Consenso">
+        <h2>Verificación de Integridad y Clasificación por Ramo</h2>
+        <img class="chart-img" src="{{ grafico_base64_1 }}" alt="Gráfico Integridad Hash y Ramos">
     </div>
 
     <div class="card">
-        <h2>Análisis General de Latencia</h2>
-        <img src="{{ grafico_base64_2 }}" alt="Histograma General de Latencias">
+        <h2>Distribución General de Tiempos de Respuesta</h2>
+        <img class="chart-img" src="{{ grafico_base64_2 }}" alt="Histograma Latencias General">
     </div>
 
     <div class="card">
-        <h2>Desglose de Latencias por Votos y Errores</h2>
-        <img src="{{ grafico_base64_3 }}" alt="Histogramas Comparativos de Latencia">
+        <h2>Detalle de Pólizas Procesadas</h2>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Número Póliza</th>
+                        <th>Titular</th>
+                        <th>Ramo</th>
+                        <th>Integridad (Hash)</th>
+                        <th>Tiempo Respuesta</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in resumenes %}
+                    <tr>
+                        <td><strong>{{ p.numero_poliza }}</strong></td>
+                        <td>{{ p.titular }}</td>
+                        <td>{{ p.ramo }}</td>
+                        <td>
+                            {% if p.hash_coincide %}
+                                <span class="badge success">VÁLIDO</span>
+                            {% else %}
+                                <span class="badge danger">ALTERADO</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ p.tiempo_tardado }} ms</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <!-- JSON Original Incrustado -->
+    <div class="card">
+        <h2>Métricas de Seguridad de Eventos</h2>
+
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="label">Total Eventos</div>
+                <div class="value">{{ metricas2.total_eventos }}</div>
+            </div>
+
+            <div class="kpi-card success">
+                <div class="label">IPs Habituales</div>
+                <div class="value">{{ metricas2.total_habituales }}</div>
+            </div>
+
+            <div class="kpi-card danger">
+                <div class="label">IPs Sospechosas</div>
+                <div class="value">{{ metricas2.total_sospechosas }}</div>
+            </div>
+
+            <div class="kpi-card danger">
+                <div class="label">Vulneraciones</div>
+                <div class="value">{{ metricas2.total_vulneraciones }}</div>
+            </div>
+
+            <div class="kpi-card success">
+                <div class="label">Habituales sin Vulneración</div>
+                <div class="value">{{ metricas2.habitual_sin_vulneracion }}</div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="label">% Eventos Seguros</div>
+                <div class="value">{{ metricas2.porcentaje_seguros }}%</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>IPs habituales vs rechazadas</h2>
+        <img class="chart-img" src="{{ grafico_base64_3 }}" alt="IPs habituales vs rechazadas">
+    </div>
+
+    <div class="card">
+        <h2>Latencia de Elevación de privilegios</h2>
+        <img class="chart-img" src="{{ grafico_base64_4 }}" alt="Histograma Latencias por Estado">
+    </div>
+
+
     <script id="datos-respuesta" type="application/json">
         {{ respuesta_json_str | safe }}
+    </script>
+    <script id="datos-elevacionprivilegios" type="application/json">
+        {{ resultadosElevacionPrivilegios | safe }}
     </script>
 </body>
 </html>

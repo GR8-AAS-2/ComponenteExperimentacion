@@ -7,7 +7,7 @@ import random
 
 from src.models import SolicitudPoliza
 
-from src.services import generar_token_motorpolizas, generar_solicitudes_polizas, MotorPolizasService, RespuestaIncidentesService
+from src.services import generar_token_motorpolizas, generar_solicitudes_polizas, MotorPolizasService, RespuestaIncidentesService, generar_metricas_y_graficas_polizas, generar_lista_ips, generar_metricas_y_graficas_eventos
 from src.db import db
 
 template_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../templates'))
@@ -26,15 +26,15 @@ def execute_consenso():
             }), 400
 
         cantidad_polizas = datos.get("cantidad_polizas", 10)
-        cantidad_modificar = datos.get("cantidad_modificar", 5)
+        cantidad_modificar = datos.get("cantidad_modificar", 3)
         ip_habitual = datos.get("ip_habitual", "192.0.2.10")
-        ip_nueva = datos.get("ip_nueva", "198.51.100.45")
+        cantidad_ip_total = datos.get("cantidad_ip_total", 10)
+        cantidad_ip_sospechosa = datos.get("cantidad_ip_sospechosa", 3)
         usuario_id = datos.get("usuario_id", "USR_DEV_01")
         
         solicitudes = generar_solicitudes_polizas(cantidad_polizas)
 
         servicioMotorPolizas = MotorPolizasService()
-        #servicioRespuestaIncidentes = RespuestaIncidentesService()
 
         respuestasPolizas = asyncio.run(
             servicioMotorPolizas.process_solicitudesPolizas(solicitudes)
@@ -63,47 +63,40 @@ def execute_consenso():
 
         rol_anterior = "ADMIN"
         rol_nuevo = "SUPERADMIN"
-        elevacion_privilegios = asyncio.run(
-                    servicioMotorPolizas.send_post_elevacion_privilegios(
-                        usuario_id=usuario_id,
-                        rol_anterior=rol_anterior,
-                        rol_nuevo=rol_nuevo,
-                        ip_origen=ip_habitual
-                    )
-                )
-        elevacion_privilegios = asyncio.run(
-                    servicioMotorPolizas.send_post_elevacion_privilegios(
-                        usuario_id=usuario_id,
-                        rol_anterior=rol_anterior,
-                        rol_nuevo=rol_nuevo,
-                        ip_origen=ip_habitual
-                    )
-                )
 
-        #192.0.2.10
-        #198.51.100.45
-        print("Se intentará realizar elevación de privilegios para el usuario " + usuario_id + " con rol " + rol_anterior + " a rol " + rol_nuevo + ", desde IP " + ip_nueva)
-        elevacion_privilegios = asyncio.run(
-            servicioMotorPolizas.send_post_elevacion_privilegios(
-                usuario_id=usuario_id,
-                rol_anterior=rol_anterior,
-                rol_nuevo=rol_nuevo,
-                ip_origen=ip_nueva
-            )
+        listaIps = generar_lista_ips(cantidad_ip_total, cantidad_ip_sospechosa, ip_habitual)
+
+        resultados = []
+        print("Se intentará realizar elevación de privilegios para las ips generadas:", listaIps)
+        for ip in listaIps:
+            elevacion_privilegios = asyncio.run(
+                                servicioMotorPolizas.send_post_elevacion_privilegios(
+                                    usuario_id=usuario_id,
+                                    rol_anterior=rol_anterior,
+                                    rol_nuevo=rol_nuevo,
+                                    ip_origen=ip
+                                )
+                            )
+            resultados.append(elevacion_privilegios)
+
+        tabla_metricas, grafico_img_1, grafico_img_2 = generar_metricas_y_graficas_polizas(consultas_get)
+        tabla_metricas2, grafico_img_3, grafico_img_4 = generar_metricas_y_graficas_eventos(resultados)
+
+        html_rendered = render_template(
+            "reporte.html",
+            respuesta_json_str=json.dumps(consultas_get, ensure_ascii=False, indent=2),
+            resultadosElevacionPrivilegios=json.dumps(resultados, ensure_ascii=False, indent=2),
+            metadatos={"total": len(consultas_get)},
+            metricas=tabla_metricas,
+            metricas2=tabla_metricas2,
+            resumenes=consultas_get,
+            grafico_base64_1=grafico_img_1,
+            grafico_base64_2=grafico_img_2,
+            grafico_base64_3=grafico_img_3,
+            grafico_base64_4=grafico_img_4,
         )
-
-        print("Resultado de la elevación de privilegios:", elevacion_privilegios)
-
-        #print("Se consultará el estado de la elevación de privilegios para el usuario 'USR_DEV_01'")
-        #estado_elevacion = asyncio.run(
-        #    servicioRespuestaIncidentes.get_elevacion_privilegios(
-        #        usuario_id=usuario_id
-        #    )
-        #)
-
-        #print(estado_elevacion)
         
-        return consultas_get, 200, {'Content-Type': 'application/json'}
+        return html_rendered, 200, {'Content-Type': 'text/html; charset=utf-8'}
         
     except ValueError as e:
         print(e)
